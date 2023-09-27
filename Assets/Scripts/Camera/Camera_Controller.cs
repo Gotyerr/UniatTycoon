@@ -4,87 +4,53 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    //Var Pub
-    public float walkSpeed, runSpeed, rotationSpeed;
-    public bool canMove;
-    public Transform cameraAim;
+    // Variables publicas
+    public float sensibility;
+    public Transform targetObject, cameraAimY;
+    public bool canRotate;
 
-    //Var Priv
-    private Vector3 movementVector;
-    private float speed;
-    private CharacterController characterController;
+    // Variables privadas
+    private float xRotation, yRotation;
 
+    // Start is called before the first frame update
     void Start()
     {
-        speed = 0f;
-        movementVector = Vector3.zero;
-        characterController = GetComponent<CharacterController>();
+        // Inicializacion de variables
+        xRotation = 0f;
+        yRotation = 0f;
     }
 
+    // Update is called once per frame
     void Update()
     {
-        if (canMove)
+        // Si podemos rotar
+        if (canRotate)
         {
-            Walk();
-            Run();
+            Rotate();
         }
 
-        //Gavity prov
-        Gravity();
+        // Seguimos al objetivo
+        FollowTarget();
     }
 
-
-    //-------------------------------------
-    //--------------FUNCIONES--------------
-    //-------------------------------------
-
-    //Fn Walk
-    void Walk()
+    // Funcion para rotar la camara
+    void Rotate()
     {
-        //Inputs WASD
-        movementVector.x = Input.GetAxis("Horizontal");
-        movementVector.z = Input.GetAxis("Vertical");
+        // Conseguir los inputs del mouse
+        xRotation += Input.GetAxis("Mouse X") * Time.deltaTime * sensibility;
+        yRotation += Input.GetAxis("Mouse Y") * Time.deltaTime * sensibility;
 
-        //Alighn player
-        if (movementVector.x != 0f || movementVector.z != 0f)
-        {
-            AlignPlayer();
-        }
+        // Limitar la rotacion en Y
+        yRotation = Mathf.Clamp(yRotation, -65, 65);
 
-        //Normalize movement vector
-        movementVector = movementVector.normalized;
-
-        //Move to camera direction
-        movementVector = cameraAim.TransformDirection(movementVector);
-
-        //Move
-        characterController.Move(movementVector * speed * Time.deltaTime);
+        // Rotamos los componentes X y Y de la camara
+        transform.localRotation = Quaternion.Euler(0f, xRotation, 0f);
+        cameraAimY.localRotation = Quaternion.Euler(-yRotation, 0f, 0f);
     }
 
-    //Fn Run
-    void Run()
+    // Funcion para seguir al objetivo
+    void FollowTarget()
     {
-        //Modify speed if running
-        if (Input.GetAxis("Run") > 0f)
-        {
-            speed = runSpeed;
-        }
-        else
-        {
-            speed = walkSpeed;
-        }
-    }
-
-    //Fn align player
-    void AlignPlayer()
-    {
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(movementVector), rotationSpeed * Time.deltaTime
-            );
-    }
-
-    //Fn gravity prov
-    void Gravity()
-    {
-        characterController.Move(new Vector3(0f, -4f * Time.deltaTime, 0f));
+        transform.position = targetObject.position;
     }
 }   
