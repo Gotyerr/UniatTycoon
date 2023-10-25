@@ -24,10 +24,10 @@ public class Upgrader : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.CompareTag("player"))
+        if(other.gameObject.CompareTag("Player"))
         {
           
-            if  (resourceManager.CurrentResources() >- cost)
+            if  (resourceManager.CurrentResources() >= cost)
             {
                 resourceManager.RemoveResources(cost);
                 onActivated.Invoke();

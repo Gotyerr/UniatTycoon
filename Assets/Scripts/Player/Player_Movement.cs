@@ -6,21 +6,25 @@ public class PlayerMovement : MonoBehaviour
 {
 
     // Variables publicas
-    public float walkSpeed, runSpeed, rotationSpeed;
+    public float walkSpeed, runSpeed, jumpForce, rotationSpeed;
     public bool canMove;
     public Transform cameraAim;
+    public Ground_Detector ground_Detector;
 
     // Variables privadas
-    private Vector3 movementVector;
-    private float speed;
+    private Vector3 movementVector, verticalForce;
+    private float speed, currentSpeed;
     private CharacterController characterController;
+    private bool isGrounded;
 
     // Start is called before the first frame update
     void Start()
     {
         // Inicializacion de variables
         speed = 0f;
+        currentSpeed = 0f;
         movementVector = Vector3.zero;
+        verticalForce = Vector3.zero;
         characterController = GetComponent<CharacterController>();
     }
 
@@ -33,10 +37,12 @@ public class PlayerMovement : MonoBehaviour
             Walk();
             Run();
             AlignPlayer();
+            Jump();
         }
 
-        // Gravedad provisional
+        // Gravedad 
         Gravity();
+        CheckGround();
     }
     // Funcion para caminar
     void Walk()
@@ -51,8 +57,10 @@ public class PlayerMovement : MonoBehaviour
         // Movernos en direccion a la camara
         movementVector = cameraAim.TransformDirection(movementVector);
 
+        currentSpeed = Mathf.Lerp(currentSpeed, movementVector.magnitude * speed, 10f * Time.deltaTime);
+
         // Nos movemos
-        characterController.Move(movementVector * speed * Time.deltaTime);
+        characterController.Move(movementVector * currentSpeed * Time.deltaTime);
     }
 
     // Funcion para correr
@@ -82,8 +90,35 @@ public class PlayerMovement : MonoBehaviour
     // Funcion de gravedad provisional
     void Gravity()
     {
-        characterController.Move(new Vector3(0f, -4f * Time.deltaTime, 0f));
+        if (!isGrounded)
+        {
+            verticalForce += Physics.gravity * Time.deltaTime;
+        }
+        else
+        {
+            characterController.Move(new Vector3(0f, -2f * Time.deltaTime, 0f));
+        }
+
+        characterController.Move(verticalForce * Time.deltaTime);
     }
 
+    void Jump()
+    {
+        if(isGrounded & Input.GetAxis("Jump") > 0f)
+        {
+            verticalForce = new Vector3(0f, jumpForce, 0f);
+            isGrounded = false;
+        }
+    }
+
+    void CheckGround()
+    {
+        isGrounded = ground_Detector.GetIsGrounded();
+    }
+
+    public float GetCurrentSpeed()
+    {
+        return currentSpeed;
+    }
 
 }
